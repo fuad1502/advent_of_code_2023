@@ -10,11 +10,15 @@ public class Main {
 			{
 				var games = Main.parseGame(new FileReader("aoc23_2/test"));
 				var result = Main.f(games);
+				var result2 = Main.f2(games);
 				assert result == 8;
+				assert result2 == 2286;
 			}
 			var games = Main.parseGame(new FileReader("aoc23_2/input"));
 			var result = Main.f(games);
+			var result2 = Main.f2(games);
 			System.out.println("Result: " + result);
+			System.out.println("Result (part 2): " + result2);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -34,6 +38,22 @@ public class Main {
 				result += gameIdx;
 			}
 			gameIdx += 1;
+		}
+		return result;
+	}
+
+	private static int f2(ArrayList<ArrayList<int[]>> games) {
+		var result = 0;
+		for (var draws: games) {
+			var maxBalls = new int[3];
+			for (var balls: draws) {
+				for (int i = 0; i < 3; i++) {
+					if (balls[i] > maxBalls[i]) {
+						maxBalls[i] = balls[i];
+					}
+				}
+			}
+			result += maxBalls[0] * maxBalls[1] * maxBalls[2];
 		}
 		return result;
 	}
