@@ -6,9 +6,9 @@ import java.util.ArrayList;
 
 public class Main {
 	public static void main(String[] args) {
-		try{
+		try {
 			{
-				var games = Main.parseGame(new FileReader("aoc23_2/test"));
+			    var games = Main.parseGame(new FileReader("aoc23_2/test"));
 				var result = Main.f(games);
 				var result2 = Main.f2(games);
 				assert result == 8;
@@ -44,9 +44,9 @@ public class Main {
 
 	private static int f2(ArrayList<ArrayList<int[]>> games) {
 		var result = 0;
-		for (var draws: games) {
+		for (var draws : games) {
 			var maxBalls = new int[3];
-			for (var balls: draws) {
+			for (var balls : draws) {
 				for (int i = 0; i < 3; i++) {
 					if (balls[i] > maxBalls[i]) {
 						maxBalls[i] = balls[i];
