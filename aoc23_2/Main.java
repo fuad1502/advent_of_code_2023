@@ -8,7 +8,7 @@ public class Main {
 	public static void main(String[] args) {
 		try {
 			{
-			    var games = Main.parseGame(new FileReader("aoc23_2/test"));
+				var games = Main.parseGame(new FileReader("aoc23_2/test"));
 				var result = Main.f(games);
 				var result2 = Main.f2(games);
 				assert result == 8;
