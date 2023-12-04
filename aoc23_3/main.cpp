@@ -19,6 +19,10 @@ int f(const std::vector<std::vector<char>> &input_matrix,
       const std::vector<Part> &parts);
 bool check_valid_part(const std::vector<std::vector<char>> &input_matrix,
                       const Part &part);
+int f2(const std::vector<std::vector<char>> &input_matrix,
+       const std::vector<Part> &parts);
+int gear_ratio(int i, int j, const std::vector<Part> &parts);
+bool is_part_adjacent_to(Part p, int i, int j);
 
 int main(int argc, char *argv[]) {
   {
@@ -26,11 +30,13 @@ int main(int argc, char *argv[]) {
     std::vector<Part> parts;
     parse_input("test", input_matrix, parts);
     assert(f(input_matrix, parts) == 4361);
+    assert(f2(input_matrix, parts) == 467835);
   }
   std::vector<std::vector<char>> input_matrix;
   std::vector<Part> parts;
   parse_input("input", input_matrix, parts);
   std::cout << "Result: " << f(input_matrix, parts) << std::endl;
+  std::cout << "Result (part 2): " << f2(input_matrix, parts) << std::endl;
   return 0;
 }
 
@@ -43,6 +49,49 @@ int f(const std::vector<std::vector<char>> &input_matrix,
     }
   }
   return result;
+}
+
+int f2(const std::vector<std::vector<char>> &input_matrix,
+       const std::vector<Part> &parts) {
+  int result = 0;
+  for (int i = 0; i < input_matrix.size(); i++) {
+    for (int j = 0; j < input_matrix[i].size(); j++) {
+      if (input_matrix[i][j] == '*') {
+        result += gear_ratio(i, j, parts);
+      }
+    }
+  }
+  return result;
+}
+
+int gear_ratio(int i, int j, const std::vector<Part> &parts) {
+  int count = 0;
+  int gear[2];
+  for (auto part : parts) {
+    if (is_part_adjacent_to(part, i, j)) {
+      gear[count] = part.number;
+      count += 1;
+    }
+    if (count == 2)
+      break;
+  }
+  if (count == 2) {
+    return gear[0] * gear[1];
+  } else {
+    return 0;
+  }
+}
+
+bool is_part_adjacent_to(Part p, int i, int j) {
+  int top = p.position.first - 1;
+  int bottom = p.position.first + 1;
+  int left = p.position.second - 1;
+  int right = p.position.second + p.length;
+  if (i >= top && i <= bottom && j >= left && j <= right) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 bool check_valid_part(const std::vector<std::vector<char>> &input_matrix,
