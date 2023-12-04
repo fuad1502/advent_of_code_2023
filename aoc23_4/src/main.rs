@@ -6,4 +6,6 @@ fn main() {
     path.push("resources/input");
     let result = f(&path);
     println!("Result: {result}");
+    let result = f2(&path);
+    println!("Result (part 2): {result}");
 }

@@ -13,6 +13,24 @@ pub fn f(path: &PathBuf) -> i32 {
     result
 }
 
+pub fn f2(path: &PathBuf) -> i32 {
+    let cards = parse_input(path);
+    let mut winning_cards = vec![0; cards.len()];
+    for (i, card) in cards.iter().enumerate() {
+        let f = |x: &_| card.winning_numbers.iter().find(|y| x == y).is_some();
+        let correct_numbers = card.owned_numbers.iter().filter(f).count();
+        winning_cards[i] += 1;
+        if correct_numbers > 0 {
+            for j in i + 1..=i + correct_numbers {
+                if j < winning_cards.len() {
+                    winning_cards[j] += winning_cards[i];
+                }
+            }
+        }
+    }
+    winning_cards.iter().sum()
+}
+
 struct Game {
     winning_numbers: Vec<i32>,
     owned_numbers: Vec<i32>,
@@ -59,5 +77,13 @@ mod test {
         path.push("resources/test");
         let result = f(&path);
         assert_eq!(result, 13);
+    }
+
+    #[test]
+    fn test_f2() {
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push("resources/test");
+        let result = f2(&path);
+        assert_eq!(result, 30);
     }
 }
