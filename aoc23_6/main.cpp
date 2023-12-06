@@ -6,29 +6,41 @@
 #include <string>
 #include <vector>
 
-void parseInput(std::string fileName, std::vector<int> &times,
-                std::vector<int> &distances);
-int calculateMargin(int time, int distance);
-int f(const std::vector<int> &times, const std::vector<int> &distances);
+void parseInput(std::string fileName, std::vector<double> &times,
+                std::vector<double> &distances, bool isSecondPart);
+double calculateMargin(double time, double distance);
+int f(const std::vector<double> &times, const std::vector<double> &distances);
 
 int main(int argc, char *argv[]) {
   {
-    std::vector<int> times;
-    std::vector<int> distances;
-    parseInput("test", times, distances);
+    std::vector<double> times;
+    std::vector<double> distances;
+    parseInput("test", times, distances, false);
     assert(f(times, distances) == 288);
   }
   {
-    std::vector<int> times;
-    std::vector<int> distances;
-    parseInput("input", times, distances);
+    std::vector<double> times;
+    std::vector<double> distances;
+    parseInput("input", times, distances, false);
     std::cout << "Result: " << f(times, distances) << std::endl;
+  }
+  {
+    std::vector<double> times;
+    std::vector<double> distances;
+    parseInput("test", times, distances, true);
+    assert(f(times, distances) == 71503);
+  }
+  {
+    std::vector<double> times;
+    std::vector<double> distances;
+    parseInput("input", times, distances, true);
+    std::cout << "Result (part 2): " << f(times, distances) << std::endl;
   }
 
   return 0;
 }
 
-int f(const std::vector<int> &times, const std::vector<int> &distances) {
+int f(const std::vector<double> &times, const std::vector<double> &distances) {
   int N = times.size();
   int result = 1;
   for (int i = 0; i < N; i++) {
@@ -37,8 +49,8 @@ int f(const std::vector<int> &times, const std::vector<int> &distances) {
   return result;
 }
 
-void parseInput(std::string fileName, std::vector<int> &times,
-                std::vector<int> &distances) {
+void parseInput(std::string fileName, std::vector<double> &times,
+                std::vector<double> &distances, bool isSecondPart) {
   std::ifstream ifs(fileName);
   std::string line;
   std::regex colon(".*:\\s*(\\w.*\\w).*");
@@ -51,10 +63,19 @@ void parseInput(std::string fileName, std::vector<int> &times,
   std::regex_search(line, sm, colon);
   auto numbersLine = sm[1].str();
   // Get numbers
-  while (std::regex_search(numbersLine, sm, number)) {
-    int number = std::stoi(sm.str());
-    times.push_back(number);
-    numbersLine = sm.suffix();
+  if (!isSecondPart) {
+    while (std::regex_search(numbersLine, sm, number)) {
+      auto number = std::stod(sm.str());
+      times.push_back(number);
+      numbersLine = sm.suffix();
+    }
+  } else {
+    std::string timeString = "";
+    while (std::regex_search(numbersLine, sm, number)) {
+      timeString.append(sm.str());
+      numbersLine = sm.suffix();
+    }
+    times.push_back(std::stod(timeString));
   }
 
   // Distances
@@ -63,10 +84,19 @@ void parseInput(std::string fileName, std::vector<int> &times,
   std::regex_search(line, sm, colon);
   numbersLine = sm[1].str();
   // Get numbers
-  while (std::regex_search(numbersLine, sm, number)) {
-    int number = std::stoi(sm.str());
-    distances.push_back(number);
-    numbersLine = sm.suffix();
+  if (!isSecondPart) {
+    while (std::regex_search(numbersLine, sm, number)) {
+      auto number = std::stod(sm.str());
+      distances.push_back(number);
+      numbersLine = sm.suffix();
+    }
+  } else {
+    std::string distanceString = "";
+    while (std::regex_search(numbersLine, sm, number)) {
+      distanceString.append(sm.str());
+      numbersLine = sm.suffix();
+    }
+    distances.push_back(std::stod(distanceString));
   }
 }
 
@@ -84,8 +114,8 @@ void parseInput(std::string fileName, std::vector<int> &times,
 // In the second rance, a, b = (15 +- 8.06) / 2 = 11.5, 3.5
 //
 // Therefore, the margin is 12 - 3 - 1 = 8
-int calculateMargin(int time, int distance) {
-  auto D = std::sqrt(time * time - 4 * distance);
+double calculateMargin(double time, double distance) {
+  auto D = std::sqrt(time * time - 4.0 * distance);
   int a = std::ceil((time + D) / 2.0);
   int b = std::floor((time - D) / 2.0);
   return a - b - 1;
