@@ -3,7 +3,6 @@ use std::{cmp::Ordering, fs, path::PathBuf};
 struct Hand {
     cards: String,
     hand_type: HandType,
-    labels: Vec<Label>,
     bet: i32,
 }
 
@@ -117,12 +116,11 @@ fn parse_input(path: &PathBuf) -> Vec<Hand> {
                 (b.1).cmp(&a.1)
             }
         });
-        let (hand_type, labels) = get_hand_type(&grouped_cards);
+        let hand_type = get_hand_type(&grouped_cards);
 
         hands.push(Hand {
             cards: cards_str,
             hand_type,
-            labels,
             bet,
         });
     }
@@ -130,47 +128,24 @@ fn parse_input(path: &PathBuf) -> Vec<Hand> {
     hands
 }
 
-fn get_hand_type(grouped_cards: &Vec<(char, i32)>) -> (HandType, Vec<Label>) {
-    let mut labels = vec![];
+fn get_hand_type(grouped_cards: &Vec<(char, i32)>) -> HandType {
     let first_group = grouped_cards.first().unwrap();
-    labels.push(Label {
-        what: first_group.0,
-    });
     if first_group.1 == 5 {
-        return (HandType::FiveOfAKind, labels);
+        return HandType::FiveOfAKind;
     } else {
         let second_group = grouped_cards.get(1).unwrap();
-        labels.push(Label {
-            what: second_group.0,
-        });
         if first_group.1 == 4 {
-            return (HandType::FourOfAKind, labels);
+            return HandType::FourOfAKind;
         } else if first_group.1 == 3 && second_group.1 == 2 {
-            return (HandType::FullHouse, labels);
+            return HandType::FullHouse;
+        } else if first_group.1 == 3 {
+            return HandType::ThreeOfAKind;
+        } else if first_group.1 == 2 && second_group.1 == 2 {
+            return HandType::TwoPair;
+        } else if first_group.1 == 2 {
+            return HandType::OnePair;
         } else {
-            let third_group = grouped_cards.get(2).unwrap();
-            labels.push(Label {
-                what: third_group.0,
-            });
-            if first_group.1 == 3 {
-                return (HandType::ThreeOfAKind, labels);
-            } else if first_group.1 == 2 && second_group.1 == 2 {
-                return (HandType::TwoPair, labels);
-            } else {
-                let fourth_group = grouped_cards.get(3).unwrap();
-                labels.push(Label {
-                    what: fourth_group.0,
-                });
-                if first_group.1 == 2 {
-                    return (HandType::OnePair, labels);
-                } else {
-                    let fifth_group = grouped_cards.get(4).unwrap();
-                    labels.push(Label {
-                        what: fifth_group.0,
-                    });
-                    return (HandType::HighCard, labels);
-                }
-            }
+            return HandType::HighCard;
         }
     }
 }
