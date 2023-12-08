@@ -1,12 +1,13 @@
 use std::{cmp::Ordering, fs, path::PathBuf};
 
+#[derive(Debug)]
 struct Hand {
     cards: String,
     hand_type: HandType,
     bet: i32,
 }
 
-#[derive(Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
 enum HandType {
     HighCard,
     OnePair,
@@ -17,7 +18,6 @@ enum HandType {
     FiveOfAKind,
 }
 
-#[derive(Eq, PartialEq)]
 struct Label {
     what: char,
 }
@@ -25,38 +25,50 @@ impl Label {
     fn new(what: char) -> Label {
         Label { what }
     }
-    fn to_value(&self) -> i32 {
-        match self.what {
-            '2' => 0,
-            '3' => 1,
-            '4' => 2,
-            '5' => 3,
-            '6' => 4,
-            '7' => 5,
-            '8' => 6,
-            '9' => 7,
-            'T' => 8,
-            'J' => 9,
-            'Q' => 10,
-            'K' => 11,
-            'A' => 12,
-            _ => panic!(),
+    fn to_value(&self, is_second_part: bool) -> i32 {
+        if is_second_part {
+            match self.what {
+                'J' => 0,
+                '2' => 1,
+                '3' => 2,
+                '4' => 3,
+                '5' => 4,
+                '6' => 5,
+                '7' => 6,
+                '8' => 7,
+                '9' => 8,
+                'T' => 9,
+                'Q' => 10,
+                'K' => 11,
+                'A' => 12,
+                _ => panic!(),
+            }
+        } else {
+            match self.what {
+                '2' => 0,
+                '3' => 1,
+                '4' => 2,
+                '5' => 3,
+                '6' => 4,
+                '7' => 5,
+                '8' => 6,
+                '9' => 7,
+                'T' => 8,
+                'J' => 9,
+                'Q' => 10,
+                'K' => 11,
+                'A' => 12,
+                _ => panic!(),
+            }
         }
     }
 }
-impl PartialOrd for Label {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        self.to_value().partial_cmp(&other.to_value())
-    }
-}
-impl Ord for Label {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.to_value().cmp(&other.to_value())
-    }
-}
 
-pub fn f(path: &PathBuf) -> i32 {
-    let mut hands = parse_input(path);
+pub fn f(path: &PathBuf, is_second_part: bool) -> i32 {
+    // Get hands
+    let mut hands = parse_input(path, is_second_part);
+
+    // Sort hands
     hands.sort_by(|a, b| {
         if a.hand_type == b.hand_type {
             let a_cards = a.cards.chars();
@@ -65,7 +77,7 @@ pub fn f(path: &PathBuf) -> i32 {
                 if a != b {
                     let a = Label::new(a);
                     let b = Label::new(b);
-                    return a.cmp(&b);
+                    return a.to_value(is_second_part).cmp(&b.to_value(is_second_part));
                 }
             }
             Ordering::Equal
@@ -73,6 +85,8 @@ pub fn f(path: &PathBuf) -> i32 {
             (a.hand_type).cmp(&b.hand_type)
         }
     });
+
+    // Calculate result
     let mut result = 0;
     for (rank, hand) in hands.iter().enumerate() {
         let rank = (rank + 1) as i32;
@@ -81,7 +95,7 @@ pub fn f(path: &PathBuf) -> i32 {
     result
 }
 
-fn parse_input(path: &PathBuf) -> Vec<Hand> {
+fn parse_input(path: &PathBuf, is_second_part: bool) -> Vec<Hand> {
     let mut hands = vec![];
 
     let input = fs::read_to_string(path).unwrap();
@@ -106,16 +120,28 @@ fn parse_input(path: &PathBuf) -> Vec<Hand> {
             }
         }
 
-        // Get hand type
-        grouped_cards.sort_by(|a, b| {
-            if a.1 == b.1 {
-                let a = Label::new(a.0);
-                let b = Label::new(b.0);
-                b.cmp(&a)
-            } else {
-                (b.1).cmp(&a.1)
+        // Sort descending
+        grouped_cards.sort_by(|a, b| (b.1).cmp(&a.1));
+
+        // Part 2 extra rule
+        if is_second_part {
+            // Find joker
+            let mut joker_idx = -1;
+            for i in 0..grouped_cards.len() {
+                if grouped_cards[i].0 == 'J' {
+                    joker_idx = i as i32;
+                }
             }
-        });
+            // Merge joker
+            if joker_idx != -1 && grouped_cards.len() != 1 {
+                let joker_idx = joker_idx as usize;
+                let n = grouped_cards[joker_idx].1;
+                grouped_cards.remove(joker_idx);
+                grouped_cards[0].1 += n;
+            }
+        }
+
+        // Get hand type
         let hand_type = get_hand_type(&grouped_cards);
 
         hands.push(Hand {
@@ -158,7 +184,15 @@ mod test {
     fn test_f() {
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         path.push("resources/test");
-        let result = f(&path);
+        let result = f(&path, false);
         assert_eq!(result, 6440);
+    }
+
+    #[test]
+    fn test_f2() {
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push("resources/test");
+        let result = f(&path, true);
+        assert_eq!(result, 5905);
     }
 }
