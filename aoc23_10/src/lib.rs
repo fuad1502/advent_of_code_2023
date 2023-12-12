@@ -1,6 +1,6 @@
 use std::{fs, path::PathBuf};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Direction {
     Up,
     Down,
@@ -25,19 +25,76 @@ pub fn parse_input(path: &PathBuf) -> (Vec<Vec<char>>, (usize, usize)) {
     (map, start_position)
 }
 
-pub fn f(map: Vec<Vec<char>>, start_position: (usize, usize)) -> i32 {
-    let ((mut pos_0, mut pos_1), (mut dir_0, mut dir_1)) = first_move(&map, start_position);
+pub fn f(map: &Vec<Vec<char>>, start_position: (usize, usize)) -> i32 {
+    let ((mut pos_0, mut pos_1), (mut dir_0, mut dir_1)) = first_move(map, start_position);
     let mut distance = 1;
     while pos_0 != pos_1 {
-        println!("0 : {:?}, {:?}", pos_0, dir_0);
-        println!("1 : {:?}, {:?}", pos_1, dir_1);
-        (pos_0, dir_0) = next_move(&map, pos_0, dir_0);
-        (pos_1, dir_1) = next_move(&map, pos_1, dir_1);
+        (pos_0, dir_0) = next_move(map, pos_0, dir_0);
+        (pos_1, dir_1) = next_move(map, pos_1, dir_1);
         distance += 1;
     }
-    println!("0 : {:?}, {:?}", pos_0, dir_0);
-    println!("1 : {:?}, {:?}", pos_1, dir_1);
     distance
+}
+
+pub fn f2(map: &Vec<Vec<char>>, start_position: (usize, usize)) -> i32 {
+    let mut marked_map = vec![vec!['O'; map[0].len()]; map.len()];
+    let ((mut pos_0, mut pos_1), (mut dir_0, mut dir_1)) = first_move(&map, start_position);
+    mark_map(
+        &mut marked_map,
+        start_position,
+        get_start_char((dir_0, dir_1)),
+    );
+    while pos_0 != pos_1 {
+        mark_map(&mut marked_map, pos_0, get_char(map, pos_0));
+        mark_map(&mut marked_map, pos_1, get_char(map, pos_1));
+        (pos_0, dir_0) = next_move(&map, pos_0, dir_0);
+        (pos_1, dir_1) = next_move(&map, pos_1, dir_1);
+    }
+    mark_map(&mut marked_map, pos_0, get_char(map, pos_0));
+
+    let mut count = 0;
+    for i in 0..map.len() {
+        let mut previous_vert = 'O';
+        let mut inside = false;
+        for j in 0..map[0].len() {
+            let c = get_char(&marked_map, (i, j));
+            if c == 'O' {
+                if inside {
+                    mark_map(&mut marked_map, (i, j), 'I');
+                    count += 1;
+                }
+            // vert = J, L, 7, |
+            } else if c != '-' {
+                if !same_vert_dir(previous_vert, c) {
+                    inside = !inside;
+                }
+                previous_vert = c;
+            }
+        }
+    }
+    count
+}
+
+fn get_start_char(dir_pair: (Direction, Direction)) -> char {
+    match dir_pair {
+        (Direction::Up, Direction::Left) | (Direction::Left, Direction::Up) => 'J',
+        (Direction::Up, Direction::Right) | (Direction::Right, Direction::Up) => 'L',
+        (Direction::Down, Direction::Left) | (Direction::Left, Direction::Down) => '7',
+        (Direction::Down, Direction::Right) | (Direction::Right, Direction::Down) => 'F',
+        _ => panic!("Invalid start character"),
+    }
+}
+
+fn mark_map(map: &mut Vec<Vec<char>>, position: (usize, usize), mark: char) {
+    map[position.0][position.1] = mark;
+}
+
+fn same_vert_dir(a: char, b: char) -> bool {
+    if (a == 'F' && b == 'J') || (a == 'L' && b == '7') {
+        true
+    } else {
+        false
+    }
 }
 
 fn next_move(
@@ -68,7 +125,6 @@ fn first_move(
     if start_position.0 != 0 {
         let check_position = (start_position.0 - 1, start_position.1);
         let c = get_char(map, check_position);
-        println!("Above: {}", c);
         if c == 'F' || c == '7' || c == '|' {
             if found_one {
                 to_position.1 = check_position;
@@ -85,7 +141,6 @@ fn first_move(
     if start_position.1 != 0 {
         let check_position = (start_position.0, start_position.1 - 1);
         let c = get_char(map, check_position);
-        println!("Left: {}", c);
         if c == 'F' || c == '-' || c == 'L' {
             if found_one {
                 to_position.1 = check_position;
@@ -102,7 +157,6 @@ fn first_move(
     {
         let check_position = (start_position.0 + 1, start_position.1);
         let c = get_char(map, check_position);
-        println!("Below: {}", c);
         if c == '|' || c == 'J' || c == 'L' {
             if found_one {
                 to_position.1 = check_position;
@@ -119,7 +173,6 @@ fn first_move(
     {
         let check_position = (start_position.0, start_position.1 + 1);
         let c = get_char(map, check_position);
-        println!("Right: {}", c);
         if c == '7' || c == '-' || c == 'J' {
             if found_one {
                 to_position.1 = check_position;
@@ -135,8 +188,8 @@ fn first_move(
 }
 
 fn get_char(map: &Vec<Vec<char>>, position: (usize, usize)) -> char {
-    if position.0 < map.len() && position.1 < map.len() {
-        *map.get(position.0).unwrap().get(position.1).unwrap()
+    if position.0 < map.len() && position.1 < map[0].len() {
+        map[position.0][position.1]
     } else {
         'x'
     }
@@ -201,6 +254,30 @@ mod test {
         let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         path.push("resources/test");
         let (map, start_position) = parse_input(&path);
-        assert_eq!(f(map, start_position), 4);
+        assert_eq!(f(&map, start_position), 4);
+    }
+
+    #[test]
+    fn test_f2_test2() {
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push("resources/test2");
+        let (map, start_position) = parse_input(&path);
+        assert_eq!(f2(&map, start_position), 8);
+    }
+
+    #[test]
+    fn test_f2_test3() {
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push("resources/test3");
+        let (map, start_position) = parse_input(&path);
+        assert_eq!(f2(&map, start_position), 10);
+    }
+
+    #[test]
+    fn test_f2_test4() {
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push("resources/test4");
+        let (map, start_position) = parse_input(&path);
+        assert_eq!(f2(&map, start_position), 4);
     }
 }
