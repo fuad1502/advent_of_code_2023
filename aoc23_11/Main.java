@@ -15,22 +15,36 @@ public class Main {
 			var galaxyLocations = (ArrayList<Coordinate>) result[0];
 			var voidRows = (ArrayList<Integer>) result[1];
 			var voidCols = (ArrayList<Integer>) result[2];
-			assert f(galaxyLocations, voidRows, voidCols) == 374;
+			assert f(galaxyLocations, voidRows, voidCols, 2) == 374;
 		}
 		{
 			var result = parseInput(new FileReader("aoc23_11/input"));
 			var galaxyLocations = (ArrayList<Coordinate>) result[0];
 			var voidRows = (ArrayList<Integer>) result[1];
 			var voidCols = (ArrayList<Integer>) result[2];
-			System.out.println("Result: " + f(galaxyLocations, voidRows, voidCols));
+			System.out.println("Result: " + f(galaxyLocations, voidRows, voidCols, 2));
+		}
+		{
+			var result = parseInput(new FileReader("aoc23_11/test"));
+			var galaxyLocations = (ArrayList<Coordinate>) result[0];
+			var voidRows = (ArrayList<Integer>) result[1];
+			var voidCols = (ArrayList<Integer>) result[2];
+			assert f(galaxyLocations, voidRows, voidCols, 100) == 8410;
+		}
+		{
+			var result = parseInput(new FileReader("aoc23_11/input"));
+			var galaxyLocations = (ArrayList<Coordinate>) result[0];
+			var voidRows = (ArrayList<Integer>) result[1];
+			var voidCols = (ArrayList<Integer>) result[2];
+			System.out.println("Result (part 2): " + f(galaxyLocations, voidRows, voidCols, 1000000));
 		}
 	}
 
 	private static class Coordinate {
-		int i;
-		int j;
+		long i;
+		long j;
 
-		Coordinate(int i, int j) {
+		Coordinate(long i, long j) {
 			this.i = i;
 			this.j = j;
 		}
@@ -40,14 +54,14 @@ public class Main {
 		}
 	}
 
-	private static int f(ArrayList<Coordinate> galaxyLocations, ArrayList<Integer> voidRows,
-			ArrayList<Integer> voidCols) {
+	private static long f(ArrayList<Coordinate> galaxyLocations, ArrayList<Integer> voidRows,
+			ArrayList<Integer> voidCols, int expansion) {
 		// Expand galaxyLocations
 		for (var loc : galaxyLocations) {
 			var newI = loc.i;
 			for (var row : voidRows) {
 				if (row < loc.i) {
-					newI += 1;
+					newI += (expansion - 1);
 				} else {
 					break;
 				}
@@ -56,7 +70,7 @@ public class Main {
 			var newJ = loc.j;
 			for (var col : voidCols) {
 				if (col < loc.j) {
-					newJ += 1;
+					newJ += (expansion - 1);
 				} else {
 					break;
 				}
@@ -64,7 +78,7 @@ public class Main {
 			loc.j = newJ;
 		}
 		// Calculate sum of distances
-		int result = 0;
+		long result = 0;
 		for (int i = 0; i < galaxyLocations.size(); i += 1) {
 			for (int j = i + 1; j < galaxyLocations.size(); j += 1) {
 				result += distance(galaxyLocations.get(i), galaxyLocations.get(j));
@@ -73,7 +87,7 @@ public class Main {
 		return result;
 	}
 
-	private static int distance(Coordinate a, Coordinate b) {
+	private static long distance(Coordinate a, Coordinate b) {
 		return Math.abs(a.i - b.i) + Math.abs(a.j - b.j);
 	}
 
